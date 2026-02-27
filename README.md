@@ -4,6 +4,8 @@ ADPulse is an open-source Active Directory security auditing tool that connects 
 
 It is designed for IT administrators, penetration testers, and security teams who need a fast, read-only assessment of AD misconfigurations and attack surface.
 
+I have included a PowerShell script named test_environment.ps1 to stand up a vulnerable domain controller to test findings on. 
+
 ---
 
 ## Features
