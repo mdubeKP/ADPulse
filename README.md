@@ -1,5 +1,11 @@
 # ADPulse — Active Directory Security Scanner
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M03Q2JN)
+
+<p align="left">
+  <img src="https://github.com/dievus/ADPulse/blob/main/images/image.png"/>
+</p>
+
 ADPulse is an open-source Active Directory security auditing tool that connects to a domain controller via LDAP(S), runs 35 automated security checks, and produces detailed reports in console, JSON, and HTML formats.
 
 It is designed for IT administrators, penetration testers, and security teams who need a fast, read-only assessment of AD misconfigurations and attack surface.
