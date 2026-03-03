@@ -413,7 +413,7 @@ def export_csv(result: ScanResult, directory: str):
     os.makedirs(directory, exist_ok=True)
 
     fieldnames = [
-        "domain", "dc_ip", "scan_time", "severity", "category", "title",
+        "domain", "dc_ip", "scan_time", "category", "title",
         "description", "recommendation", "finding_risk_score", "references",
         "detail",
     ]
@@ -438,7 +438,6 @@ def export_csv(result: ScanResult, directory: str):
             "domain":             result.domain,
             "dc_ip":              result.dc_ip,
             "scan_time":          result.scan_time,
-            "severity":           f.severity,
             "category":           f.category,
             "title":              f.title,
             "description":        f.description,
