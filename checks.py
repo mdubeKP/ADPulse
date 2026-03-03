@@ -1249,6 +1249,7 @@ def check_account_hygiene(ad: ADConnector) -> Tuple[List[F], Dict]:
     now_ldap   = int((NOW - datetime.datetime(1601,1,1,tzinfo=datetime.timezone.utc)).total_seconds()*10_000_000)
     cutoff_180 = now_ldap - 180 * 864_000_000_000
     cutoff_90  = now_ldap - 90  * 864_000_000_000
+    cutoff_60  = now_ldap - 60  * 864_000_000_000
     stale_users = ad.search(
         f"(&(objectClass=user)(!(objectClass=computer))"
         f"(!(userAccountControl:1.2.840.113556.1.4.803:=2))"
@@ -1265,10 +1266,10 @@ def check_account_hygiene(ad: ADConnector) -> Tuple[List[F], Dict]:
         findings.append(F("Account Hygiene","Stale Enabled User Accounts (180+ days)", sev,
             f"{len(stale_users)} active users haven't logged in for 180+ days.",
             details=details,
-            recommendation="Disable accounts after 90 days; delete after 180.", risk_score=10))
+            recommendation="Disable accounts after 60 days; delete after 180.", risk_score=10))
     stale_comp = ad.search(
         f"(&(objectClass=computer)(!(userAccountControl:1.2.840.113556.1.4.803:=2))"
-        f"(lastLogonTimestamp<={cutoff_90})(lastLogonTimestamp>=1))",
+        f"(lastLogonTimestamp<={cutoff_60})(lastLogonTimestamp>=1))",
         ["sAMAccountName","lastLogonTimestamp"])
     stats["stale_computers"] = len(stale_comp)
     if len(stale_comp) > 10:
