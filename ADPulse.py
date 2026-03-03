@@ -151,7 +151,7 @@ def main() -> None:
     if args.report in ("json", "all"):
         export_json(result, str(out / f"ad_scan_{dn}_{ts}.json"))
     if args.report in ("csv", "all"):
-        export_csv(result, str(out / f"ad_scan_{dn}_{ts}.csv"))
+        export_csv(result, str(out / f"ad_scan_{dn}_{ts}_csv"))
     if args.report in ("html", "all"):
         export_html(result, str(out / f"ad_scan_{dn}_{ts}.html"))
 

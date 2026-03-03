@@ -1,5 +1,7 @@
 import csv
 import json
+import os
+import re
 from collections import defaultdict
 from models import ScanResult, SEVERITY_ORDER
 
@@ -393,32 +395,66 @@ def export_json(result: ScanResult, path: str):
 
 # ── CSV export ────────────────────────────────────────────────────────────────
 
-def export_csv(result: ScanResult, path: str):
+def _sanitize_filename(title: str) -> str:
+    """Convert a finding title to a safe filename stem."""
+    s = re.sub(r"[^\w\s-]", "", title)      # strip chars that aren't word/space/hyphen
+    s = re.sub(r"[\s]+", "_", s.strip())    # spaces → underscores
+    s = re.sub(r"_+", "_", s)               # collapse consecutive underscores
+    return s.strip("_") or "finding"
+
+
+def export_csv(result: ScanResult, directory: str):
+    """Write one CSV file per finding (title) into *directory*.
+
+    Findings with no detail items are skipped — they carry no per-object data.
+    Each row represents one detail item; scan/finding metadata is repeated on
+    every row so individual files remain self-contained.
+    """
+    os.makedirs(directory, exist_ok=True)
+
     fieldnames = [
-        "domain", "dc_ip", "scan_time", "risk_score", "risk_level",
-        "category", "title", "severity", "description",
-        "details", "recommendation", "finding_risk_score", "references",
+        "domain", "dc_ip", "scan_time", "severity", "category", "title",
+        "description", "recommendation", "finding_risk_score", "references",
+        "detail",
     ]
-    with open(path, "w", encoding="utf-8-sig", newline="") as fp:
-        writer = csv.DictWriter(fp, fieldnames=fieldnames)
-        writer.writeheader()
-        for f in result.findings_by_severity():
-            writer.writerow({
-                "domain":             result.domain,
-                "dc_ip":              result.dc_ip,
-                "scan_time":          result.scan_time,
-                "risk_score":         result.total_score,
-                "risk_level":         result.risk_level,
-                "category":           f.category,
-                "title":              f.title,
-                "severity":           f.severity,
-                "description":        f.description,
-                "details":            " | ".join(f.details),
-                "recommendation":     f.recommendation,
-                "finding_risk_score": f.risk_score,
-                "references":         " | ".join(f.references),
-            })
-    print(f"[+] CSV  report -> {path}")
+
+    used_names: dict = {}   # stem -> count, for collision handling
+    files_written = 0
+
+    for f in result.findings_by_severity():
+        if not f.details:
+            continue
+
+        stem = _sanitize_filename(f.title)
+        if stem in used_names:
+            used_names[stem] += 1
+            filename = f"{stem}_{used_names[stem]}.csv"
+        else:
+            used_names[stem] = 1
+            filename = f"{stem}.csv"
+
+        path = os.path.join(directory, filename)
+        base_row = {
+            "domain":             result.domain,
+            "dc_ip":              result.dc_ip,
+            "scan_time":          result.scan_time,
+            "severity":           f.severity,
+            "category":           f.category,
+            "title":              f.title,
+            "description":        f.description,
+            "recommendation":     f.recommendation,
+            "finding_risk_score": f.risk_score,
+            "references":         " | ".join(f.references),
+        }
+        with open(path, "w", encoding="utf-8-sig", newline="") as fp:
+            writer = csv.DictWriter(fp, fieldnames=fieldnames)
+            writer.writeheader()
+            for detail in f.details:
+                writer.writerow({**base_row, "detail": detail})
+
+        files_written += 1
+
+    print(f"[+] CSV  reports -> {directory}/ ({files_written} file(s))")
 
 
 # ── HTML helpers ──────────────────────────────────────────────────────────────
