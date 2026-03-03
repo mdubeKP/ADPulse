@@ -1,3 +1,4 @@
+import csv
 import json
 from collections import defaultdict
 from models import ScanResult, SEVERITY_ORDER
@@ -388,6 +389,36 @@ def export_json(result: ScanResult, path: str):
     with open(path, "w", encoding="utf-8") as fp:
         json.dump(data, fp, indent=2, default=str)
     print(f"[+] JSON report -> {path}")
+
+
+# ── CSV export ────────────────────────────────────────────────────────────────
+
+def export_csv(result: ScanResult, path: str):
+    fieldnames = [
+        "domain", "dc_ip", "scan_time", "risk_score", "risk_level",
+        "category", "title", "severity", "description",
+        "details", "recommendation", "finding_risk_score", "references",
+    ]
+    with open(path, "w", encoding="utf-8-sig", newline="") as fp:
+        writer = csv.DictWriter(fp, fieldnames=fieldnames)
+        writer.writeheader()
+        for f in result.findings_by_severity():
+            writer.writerow({
+                "domain":             result.domain,
+                "dc_ip":              result.dc_ip,
+                "scan_time":          result.scan_time,
+                "risk_score":         result.total_score,
+                "risk_level":         result.risk_level,
+                "category":           f.category,
+                "title":              f.title,
+                "severity":           f.severity,
+                "description":        f.description,
+                "details":            " | ".join(f.details),
+                "recommendation":     f.recommendation,
+                "finding_risk_score": f.risk_score,
+                "references":         " | ".join(f.references),
+            })
+    print(f"[+] CSV  report -> {path}")
 
 
 # ── HTML helpers ──────────────────────────────────────────────────────────────

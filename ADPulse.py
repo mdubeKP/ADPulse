@@ -26,7 +26,7 @@ from pathlib import Path
 from connector import ADConnector, resolve_dc, parse_hash
 from checks import run_all_checks
 from models import ScanResult
-from report import print_report, export_json, export_html
+from report import print_report, export_json, export_html, export_csv
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -43,7 +43,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--dc-ip",
                    help="Domain Controller IP (auto-resolved via DNS if omitted)")
     p.add_argument("--report",
-                   choices=["console", "json", "html", "all"], default="all",
+                   choices=["console", "json", "html", "csv", "all"], default="all",
                    help="Report format(s) to produce (default: all)")
     p.add_argument("--output-dir", default=".",
                    help="Parent directory for the Reports/ folder (default: current dir)")
@@ -150,6 +150,8 @@ def main() -> None:
         print_report(result)
     if args.report in ("json", "all"):
         export_json(result, str(out / f"ad_scan_{dn}_{ts}.json"))
+    if args.report in ("csv", "all"):
+        export_csv(result, str(out / f"ad_scan_{dn}_{ts}.csv"))
     if args.report in ("html", "all"):
         export_html(result, str(out / f"ad_scan_{dn}_{ts}.html"))
 
