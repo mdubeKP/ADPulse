@@ -770,7 +770,7 @@ def check_privileged_accounts(ad: ADConnector) -> Tuple[List[F], Dict]:
             names.append(n)
             uac = ad.attr_int(u, "userAccountControl")
             llt = _ldap_ts_to_dt(_attr_raw(u, "lastLogonTimestamp"))
-            if _days_since(llt) and _days_since(llt) > 90:
+            if _days_since(llt) and _days_since(llt) > 60:
                 stale.append(f"{n} ({_days_since(llt)}d inactive)")
             if uac & UAC_DONT_EXPIRE_PASSWD:
                 no_expire.append(n)
@@ -788,7 +788,7 @@ def check_privileged_accounts(ad: ADConnector) -> Tuple[List[F], Dict]:
                 risk_score=15))
         if stale and gname in SENSITIVE:
             findings.append(F("Privileged Accounts", f"Stale Members in '{gname}'","HIGH",
-                f"{len(stale)} member(s) inactive for 90+ days.",
+                f"{len(stale)} member(s) inactive for 60+ days.",
                 details=stale,
                 recommendation="Disable or remove stale privileged accounts.", risk_score=12))
         if no_expire and gname in SENSITIVE:
@@ -1248,7 +1248,6 @@ def check_account_hygiene(ad: ADConnector) -> Tuple[List[F], Dict]:
     print("  [*] Account Hygiene")
     now_ldap   = int((NOW - datetime.datetime(1601,1,1,tzinfo=datetime.timezone.utc)).total_seconds()*10_000_000)
     cutoff_180 = now_ldap - 180 * 864_000_000_000
-    cutoff_90  = now_ldap - 90  * 864_000_000_000
     cutoff_60  = now_ldap - 60  * 864_000_000_000
     stale_users = ad.search(
         f"(&(objectClass=user)(!(objectClass=computer))"
@@ -1278,8 +1277,8 @@ def check_account_hygiene(ad: ADConnector) -> Tuple[List[F], Dict]:
             llt  = _ldap_ts_to_dt(_attr_raw(u,"lastLogonTimestamp"))
             days = _days_since(llt)
             details.append(f"{ad.attr_str(u,'sAMAccountName')} (last auth: {days}d ago)")
-        findings.append(F("Account Hygiene","Stale Enabled Computer Accounts (90+ days)","MEDIUM",
-            f"{len(stale_comp)} computer accounts haven't authenticated for 90+ days.",
+        findings.append(F("Account Hygiene","Stale Enabled Computer Accounts (60+ days)","MEDIUM",
+            f"{len(stale_comp)} computer accounts haven't authenticated for 60+ days.",
             details=details,
             recommendation="Disable stale computer accounts.", risk_score=7))
     never = ad.search(
